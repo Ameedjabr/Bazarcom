@@ -1,20 +1,28 @@
-<project>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>bazar</groupId>
-    <artifactId>order-service</artifactId>
+    <artifactId>frontend-service</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
+        <!-- Java HTTP Server -->
+        <dependency>
+            <groupId>com.sun.net.httpserver</groupId>
+            <artifactId>http</artifactId>
+            <version>20070405</version>
+        </dependency>
 
-        <!-- Gson FIX -->
+        <!-- Gson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
-
-        <!-- HttpServer dependency (optional depending on Java version) -->
     </dependencies>
 
     <build>
@@ -24,9 +32,10 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>bazar.order.OrderService</mainClass>
+                    <mainClass>bazar.frontend.FrontEndService</mainClass>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
 </project>

@@ -8,7 +8,10 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
@@ -16,7 +19,9 @@ import com.sun.net.httpserver.HttpServer;
 
 public class CatalogService {
 
-    private static final String CATALOG_PATH = "src/main/resources/catalog.csv";
+    private static final String CATALOG_PATH =
+        CatalogService.class.getClassLoader().getResource("catalog.csv").getPath();
+
     private static final Gson gson = new Gson();
 
     private static final Map<String, Book> catalog = new HashMap<>();
