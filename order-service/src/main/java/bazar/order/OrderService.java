@@ -72,6 +72,9 @@ public class OrderService {
             sendResponse(exchange, 500, "Failed to update stock!");
             return;
         }
+        // invalidate cache after write
+          invalidateFrontendCache(id);
+        
 
         // 4) Return success JSON
         JsonObject response = new JsonObject();
@@ -117,6 +120,21 @@ public class OrderService {
 
         return conn.getResponseCode() == 200;
     }
+   /* -------------------------------- validating --------------------------- */ 
+    private static void invalidateFrontendCache(String id) {
+    try {
+        URL url = new URL("http://localhost:9000/invalidate/" + id);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setConnectTimeout(500);
+        conn.setReadTimeout(500);
+        conn.connect(); 
+    } catch (Exception e) {
+        System.err.println("Cache invalidation failed for id=" + id);
+    }
+}
+
+
 
     /* -------------------- Response helpers -------------------- */
 

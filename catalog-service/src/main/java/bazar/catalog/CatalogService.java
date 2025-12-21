@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -137,13 +138,36 @@ public class CatalogService {
             b.quantity = Integer.parseInt(params.get("quantity"));
         }
 
+        
+
         // Save updated catalog back to CSV
-        saveCatalog();
+          saveCatalog();
 
         sendJSON(exchange, gson.toJson(Map.of("status", "updated")), 200);
     }
 
     /* -------------------- Helpers -------------------- */
+
+    private static void replicateUpdateToOtherReplica(
+        String id, double price, int quantity) {
+
+    try {
+        // If this replica is 5000, replicate to 5001
+        URL url = new URL(
+            "http://localhost:5001/update/" + id +
+            "?price=" + price + "&quantity=" + quantity
+        );
+
+        java.net.HttpURLConnection conn =
+                (java.net.HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.getResponseCode();
+
+    } catch (Exception e) {
+        System.err.println("Replication failed for item " + id);
+    }
+}
+
 
     private static void loadCatalog() throws IOException {
         try (BufferedReader br = new BufferedReader(new FileReader(CATALOG_PATH))) {
@@ -176,6 +200,9 @@ public class CatalogService {
         }
         System.out.println("Catalog updated and saved.");
     }
+
+   
+
 
     private static Map<String, String> parseQuery(String q) {
         Map<String, String> map = new HashMap<>();
