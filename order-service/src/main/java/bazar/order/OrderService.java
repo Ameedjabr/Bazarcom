@@ -17,17 +17,20 @@ public class OrderService {
 
     private static final Gson gson = new Gson();
 
-    public static void main(String[] args) throws Exception {
+   public static void main(String[] args) throws Exception {
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(7000), 0);
+    int port = (args.length > 0) ? Integer.parseInt(args[0]) : 7000;
 
-        server.createContext("/order", OrderService::handleOrder);
+    HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
-        server.setExecutor(null);
-        System.out.println("OrderService running at http://localhost:7000/order?id=1");
+    server.createContext("/order", OrderService::handleOrder);
 
-        server.start();
-    }
+    server.setExecutor(null);
+    System.out.println("OrderService running at http://localhost:" + port + "/order?id=1");
+
+    server.start();
+}
+
 
     /* -------------------- Handler -------------------- */
 

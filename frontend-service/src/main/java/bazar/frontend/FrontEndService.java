@@ -18,7 +18,11 @@ public class FrontEndService {
 private static final String[] CATALOG_REPLICAS = {
         "http://localhost:5000",
         "http://localhost:5001"
+        
 };
+
+private static boolean USE_CACHE = true;
+
 
 private static final String[] ORDER_REPLICAS = {
         "http://localhost:7000",
@@ -56,6 +60,12 @@ private static final Map<String, String> infoCache =
 
     public static void main(String[] args) throws Exception {
 
+        if (args.length > 0 && args[0].equalsIgnoreCase("nocache")) {
+    USE_CACHE = false;
+    System.out.println("Cache disabled");
+}
+
+
         HttpServer server = HttpServer.create(new InetSocketAddress(9000), 0);
 
         server.createContext("/search", FrontEndService::handleSearch);
@@ -69,60 +79,70 @@ private static final Map<String, String> infoCache =
         server.start();
     }
 
-    private static void handleSearch(HttpExchange ex) throws IOException {
+   private static void handleSearch(HttpExchange ex) throws IOException {
 
-        String path = ex.getRequestURI().getPath();
-        String[] parts = path.split("/", 3);
+    String path = ex.getRequestURI().getPath();
+    String[] parts = path.split("/", 3);
 
-        if (parts.length < 3) {
-            sendText(ex, 400, "Missing topic: /search/{topic}");
-            return;
-        }
-
-        String topic = parts[2];
-        String url = nextCatalogReplica() + "/search/" + topic;
-
-
-        String response = httpGET(url);
-
-        sendJSON(ex, 200, response);
+    if (parts.length < 3) {
+        sendText(ex, 400, "Missing topic: /search/{topic}");
+        return;
     }
+
+    // Java HttpServer already decoded the path
+    String topic = parts[2];
+
+    // MUST re-encode before forwarding
+    String encodedTopic =
+        java.net.URLEncoder.encode(topic, java.nio.charset.StandardCharsets.UTF_8);
+
+    String url = nextCatalogReplica() + "/search/" + encodedTopic;
+
+    String response = httpGET(url);
+    sendJSON(ex, 200, response);
+}
+
 
     private static void handleInfo(HttpExchange ex) throws IOException {
 
-        String path = ex.getRequestURI().getPath();
-        String[] parts = path.split("/", 3);
+    String path = ex.getRequestURI().getPath();
+    String[] parts = path.split("/", 3);
 
-        if (parts.length < 3) {
-            sendText(ex, 400, "Missing item ID: /info/{id}");
-            return;
-        }
+    if (parts.length < 3) {
+        sendText(ex, 400, "Missing item ID: /info/{id}");
+        return;
+    }
 
-        String id = parts[2];
-        // 1) Check cache first (read-only caching)
+    String id = parts[2];
+
+    // 1) Cache HIT (only if cache enabled)
+    if (USE_CACHE) {
         String cached;
         synchronized (infoCache) {
-           cached = infoCache.get(id);
+            cached = infoCache.get(id);
         }
 
         if (cached != null) {
-         // cache HIT
-         sendJSON(ex, 200, cached);
-         return;
+            // cache HIT
+            sendJSON(ex, 200, cached);
+            return;
         }
-
-       // 2) Cache MISS => forward to a catalog replica (round-robin)
-       String url = nextCatalogReplica() + "/info/" + id;
-       String response = httpGET(url);
-
-       // 3) Put in cache
-       synchronized (infoCache) {
-          infoCache.put(id, response);
-        }
-
-        sendJSON(ex, 200, response);
- 
     }
+
+    // 2) Cache MISS → forward to catalog
+    String url = nextCatalogReplica() + "/info/" + id;
+    String response = httpGET(url);
+
+    // 3) Store in cache (only if enabled)
+    if (USE_CACHE) {
+        synchronized (infoCache) {
+            infoCache.put(id, response);
+        }
+    }
+
+    sendJSON(ex, 200, response);
+}
+
 
     private static void handlePurchase(HttpExchange ex) throws IOException {
 

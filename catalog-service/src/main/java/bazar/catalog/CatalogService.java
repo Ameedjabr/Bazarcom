@@ -21,7 +21,8 @@ import com.sun.net.httpserver.HttpServer;
 public class CatalogService {
 
     private static final String CATALOG_PATH =
-        CatalogService.class.getClassLoader().getResource("catalog.csv").getPath();
+    "data/catalog.csv";
+
 
     private static final Gson gson = new Gson();
 
@@ -29,24 +30,30 @@ public class CatalogService {
 
     public static void main(String[] args) throws Exception {
 
-        loadCatalog();
+    loadCatalog();
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(5000), 0);
+    // 👇 ADD THIS
+    int port = (args.length > 0) ? Integer.parseInt(args[0]) : 5000;
 
-        server.createContext("/search", CatalogService::handleSearch);
-        server.createContext("/info", CatalogService::handleInfo);
+    // 👇 REPLACE 5000 with port
+    HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
-        // NEW — update endpoint required by the assignment
-        server.createContext("/update", CatalogService::handleUpdate);
+    server.createContext("/search", CatalogService::handleSearch);
+    server.createContext("/info", CatalogService::handleInfo);
+    server.createContext("/update", CatalogService::handleUpdate);
 
-        // Assignment-aliases
-        server.createContext("/query", CatalogService::handleInfo); // /query/{id}
-        server.createContext("/query/subject", CatalogService::handleSearch); // /query/subject/{topic}
+    // aliases (if you use them)
+    server.createContext("/query", CatalogService::handleInfo);
+    server.createContext("/query/subject", CatalogService::handleSearch);
 
-        server.setExecutor(null);
-        System.out.println("CatalogService running on http://localhost:5000");
-        server.start();
-    }
+    server.setExecutor(null);
+
+    // 👇 PRINT ACTUAL PORT
+    System.out.println("CatalogService running on http://localhost:" + port);
+
+    server.start();
+}
+
 
     /* -------------------- Handlers -------------------- */
 
